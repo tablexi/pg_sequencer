@@ -9,6 +9,8 @@ The design of pg_sequencer is heavily influenced on Matthew Higgins' Foreigner g
 
 == Installation
 
+Requires `ruby` version 2.0+.
+
 Add this to your Gemfile:
 
   gem 'pg_sequencer'

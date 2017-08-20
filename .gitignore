@@ -1,5 +1,6 @@
-Gemfile.lock
 .bundle/
+.ruby-version
+Gemfile.lock
 log/*.log
 pkg/
 test/dummy/db/*.sqlite3
