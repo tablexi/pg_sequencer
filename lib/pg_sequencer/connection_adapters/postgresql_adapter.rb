@@ -74,7 +74,7 @@ module PgSequencer
         sql << restart_option_sql(options) if options[:restart]  or options[:restart_with]
         sql << cache_option_sql(options) if options[:cache]
         sql << cycle_option_sql(options)
-        sql << owned_option_sql(options) if options[:owned_by]
+        # sql << owned_option_sql(options) if options[:owned_by]
         sql
       end
 
@@ -96,7 +96,7 @@ module PgSequencer
         select_sequence_names.each do |sequence_name|
 
           row = select_one("SELECT * FROM #{sequence_name}")
-          owner = select_sequence_owner(sequence_name)
+          # owner = select_sequence_owner(sequence_name)
 
           options = {
             increment: row["increment_by"].to_i,
@@ -105,7 +105,7 @@ module PgSequencer
             start: row["start_value"].to_i,
             cache: row["cache_value"].to_i,
             cycle: row["is_cycled"] == "t",
-            owned_by: owner ? "#{owner["refobjid"]}.#{owner["attname"]}" : nil
+            # owned_by: owner ? "#{owner["refobjid"]}.#{owner["attname"]}" : nil
           }
 
           all_sequences << SequenceDefinition.new(sequence_name, options)

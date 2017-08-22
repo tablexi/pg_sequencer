@@ -20,7 +20,7 @@ describe PgSequencer::SchemaDumper do
         start: 1,
         cache: 5,
         cycle: true,
-        owned_by: "table_name.column_name",
+        # owned_by: "table_name.column_name",
       }
     end
 
@@ -28,8 +28,8 @@ describe PgSequencer::SchemaDumper do
       expected_output = <<~SCHEMAEND
                         # Fake Schema Header
                         # (No Tables)
-                          create_sequence "item_seq", increment: 1, min: 1, max: 2000000, start: 1, cache: 5, cycle: true, owned_by: "table_name.column_name"
-                          create_sequence "user_seq", increment: 1, min: 1, max: 2000000, start: 1, cache: 5, cycle: true, owned_by: "table_name.column_name"
+                          create_sequence "item_seq", increment: 1, min: 1, max: 2000000, start: 1, cache: 5, cycle: true
+                          create_sequence "user_seq", increment: 1, min: 1, max: 2000000, start: 1, cache: 5, cycle: true
 
                         # Fake Schema Trailer
                         SCHEMAEND
@@ -48,7 +48,7 @@ describe PgSequencer::SchemaDumper do
         start: 1,
         cache: 5,
         cycle: true,
-        owned_by: "table_name.column_name",
+        # owned_by: "table_name.column_name",
       }
     end
 
@@ -56,8 +56,8 @@ describe PgSequencer::SchemaDumper do
       expected_output = <<~SCHEMAEND
                         # Fake Schema Header
                         # (No Tables)
-                          create_sequence "item_seq", increment: 1, min: false, max: 2000000, start: 1, cache: 5, cycle: true, owned_by: "table_name.column_name"
-                          create_sequence "user_seq", increment: 1, min: false, max: 2000000, start: 1, cache: 5, cycle: true, owned_by: "table_name.column_name"
+                          create_sequence "item_seq", increment: 1, min: false, max: 2000000, start: 1, cache: 5, cycle: true
+                          create_sequence "user_seq", increment: 1, min: false, max: 2000000, start: 1, cache: 5, cycle: true
 
                         # Fake Schema Trailer
                         SCHEMAEND
