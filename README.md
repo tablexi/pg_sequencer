@@ -2,11 +2,7 @@
 
 [![Build Status](https://travis-ci.org/tablexi/pg_sequencer.svg?branch=master)](https://travis-ci.org/tablexi/pg_sequencer)
 
-pg_sequencer adds methods to your migrations to allow you to create, drop and change sequence objects in PostgreSQL. It also dumps sequences to schema.rb.
-
-This is especially useful if you are connecting to a legacy database where the primary key field is declared as an INTEGER and a sequence is queried for the value of the next record.
-
-The design of pg_sequencer is heavily influenced on Matthew Higgins' Foreigner gem: https://github.com/matthuhiggins/foreigner
+The `pg_sequencer` gem adds methods to your migrations to allow you to create, drop and change sequence objects in PostgreSQL. It also dumps sequences to `schema.rb` by extending `ActiveRecord::SchemaDumper`.
 
 
 ## Installation
@@ -28,12 +24,12 @@ change_sequence(sequence_name, options)
 drop_sequence(sequence_name)
 ```
 
-The methods closely mimic the syntax of the PostgreSQL SQL for `CREATE SEQUENCE`, `DROP SEQUENCE` and `ALTER SEQUENCE`. See the *REFERENCES* section below for more information.
+The methods closely mimic the syntax of the PostgreSQL for `CREATE SEQUENCE`, `DROP SEQUENCE` and `ALTER SEQUENCE`. See the **References** section below for more information.
 
 
 ## Options
 
-For `create_sequence` and `change_sequence`, all options are the same, except `create_sequence` will look for `:start` or `:start_with`, and
+For create_sequence and change_sequence, all options are the same, except `create_sequence` will look for `:start` or `:start_with`, and
 `change_sequence` will look for `:restart` or `:restart_with`.
 
 * `:increment`/`:increment_by` (integer) - The value to increment the sequence by.
@@ -45,10 +41,7 @@ For `create_sequence` and `change_sequence`, all options are the same, except `c
 * `:cycle` (boolean) - Whether the sequence should cycle. Generated at "CYCLE" or "NO CYCLE"
 
 
-## Examples
-
-
-### Creating a sequence
+## Create a sequence
 
 Create a sequence called `user_seq`, incrementing by 1, min of 1, max of 2000000, starts at 1, caches 10 values, and disallows cycles:
 
@@ -60,23 +53,27 @@ Create a sequence called `user_seq`, incrementing by 1, min of 1, max of 2000000
       cache: 10,
       cycle: false
 
-This is equivalent of the following query:
+This is equivalent to:
 
     CREATE SEQUENCE user_seq INCREMENT BY 1 MIN 1 MAX 2000000 START 1 CACHE 10 NO CYCLE
 
 
-### Reset a sequence's value:
+## Alter a sequence
 
-    change_sequence "accounts_seq", :restart_with => 50
+    change_sequence "accounts_seq", restart_with: 50
 
 This is equivalent to:
 
     ALTER SEQUENCE accounts_seq RESTART WITH 50
 
 
-### Removing a sequence:
+## Remove a sequence
 
     drop_sequence "products_seq"
+
+This is equivalent to:
+
+    DROP SEQUENCE products_seq
 
 
 ## Caveats / Bugs
@@ -85,11 +82,19 @@ This is equivalent to:
 * Listing all the sequences in a database creates n+1 queries (1 to get the names and n to describe each sequence). Is there a way to fully describe all sequences in a database in one query?
 * The "SET SCHEMA" fragment of the ALTER command is not implemented.
 * Oracle/other databases not supported
-* Other unknown bugs :)
 
 
 ## References
 
-* http://www.postgresql.org/docs/8.1/static/sql-createsequence.html
-* http://www.postgresql.org/docs/8.1/static/sql-altersequence.html
+* http://www.postgresql.org/docs/9.6/static/sql-createsequence.html
+* http://www.postgresql.org/docs/9.6/static/sql-altersequence.html
 * http://www.alberton.info/postgresql_meta_info.html
+
+
+## Credits
+
+The original version of this gem was written by Tony Collen from
+[Code42](https://www.code42.com).
+
+The design of pg_sequencer is heavily influenced by Matthew Higgins' `foreigner`
+gem: https://github.com/matthuhiggins/foreigner
