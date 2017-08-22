@@ -67,11 +67,11 @@ This is equivalent of the following query:
 
 ### Reset a sequence's value:
 
-  change_sequence "accounts_seq", :restart_with => 50
+    change_sequence "accounts_seq", :restart_with => 50
 
 This is equivalent to:
 
-  ALTER SEQUENCE accounts_seq RESTART WITH 50
+    ALTER SEQUENCE accounts_seq RESTART WITH 50
 
 
 ### Removing a sequence:
