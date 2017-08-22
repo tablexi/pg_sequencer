@@ -1,26 +1,31 @@
-$:.push File.expand_path("../lib", __FILE__)
+lib = File.expand_path("../lib", __FILE__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
-# Maintain your gem's version:
 require "pg_sequencer/version"
 
-# Describe your gem and declare its dependencies:
-Gem::Specification.new do |s|
-  s.name        = "pg_sequencer"
-  s.version     = PgSequencer::VERSION
-  s.authors     = ["Tony Collen"]
-  s.email       = ["tonyc@code42.com"]
-  s.homepage    = "https://github.com/code42/pg_sequencer/"
-  s.summary     = "Manage postgres sequences in Rails migrations"
-  s.description = "Sequences need some love. pg_sequencer teaches Rails what sequences are, and will dump them to schema.rb, and also lets you create/drop sequences in migrations."
+Gem::Specification.new do |spec|
+  spec.name           = "pg_sequencer"
+  spec.version        = PgSequencer::VERSION
+  spec.authors        = ["Tony Collen"]
+  spec.email          = ["tonyc@code42.com"]
+  spec.homepage       = "https://github.com/code42/pg_sequencer/"
+  spec.license        = "MIT"
+  spec.summary        = "Manage postgres sequences in rails migrations"
+  spec.description    = "Sequences need some love. pg_sequencer teaches Rails what sequences are, and will dump them to schema.rb, and also lets you create/drop sequences in migrations."
 
-  s.files = Dir["{app,config,db,lib}/**/*"] + ["Rakefile", "README.rdoc"]
-  s.test_files = Dir["test/**/*"]
+  spec.files          = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(\test|spec|features)/}) }
+  spec.bindir         = "bin"
+  spec.executables    = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
+  spec.require_paths  = ["lib"]
 
-  # s.add_dependency "rails", "~> 3.1.0"
-  s.add_dependency 'activerecord', '>= 3.0.0'
-  s.add_development_dependency 'activerecord', '>= 3.1.0'
-  s.add_development_dependency "pg", "0.11.0"
-  s.add_development_dependency "guard"
-  s.add_development_dependency "guard-test"
-  s.add_development_dependency "shoulda-context"
+  spec.required_ruby_version = ">= 2.0.0"
+
+  spec.add_runtime_dependency "activesupport", ">= 3.0.0"
+  spec.add_runtime_dependency "activerecord", ">= 3.0.0"
+
+  spec.add_development_dependency "pg", "0.11.0"
+  spec.add_development_dependency "bundler"
+  spec.add_development_dependency "rake"
+  spec.add_development_dependency "rspec"
+  spec.add_development_dependency "pry"
 end
