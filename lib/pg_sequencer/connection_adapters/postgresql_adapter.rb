@@ -120,7 +120,7 @@ module PgSequencer
       # --------------+--------------------
       # relname       | some_seq
       def select_sequence_names
-        sql = <<~SQL
+        sql = <<-SQL.strip_heredoc
               SELECT c.relname FROM pg_class c
               WHERE c.relkind = 'S' ORDER BY c.relname ASC
               SQL
@@ -133,7 +133,7 @@ module PgSequencer
       # refobjid      | some_table
       # attname       | some_column
       def select_sequence_owner(sequence_name)
-        sql = <<~SQL
+        sql = <<-SQL.strip_heredoc
               SELECT d.refobjid::regclass, a.attname
               FROM pg_depend d
               JOIN pg_attribute a ON a.attrelid = d.refobjid

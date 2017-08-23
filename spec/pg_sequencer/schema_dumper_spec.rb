@@ -25,7 +25,7 @@ describe PgSequencer::SchemaDumper do
     end
 
     it "outputs all sequences correctly" do
-      expected_output = <<~SCHEMAEND
+      expected_output = <<-SCHEMAEND.strip_heredoc
                         # Fake Schema Header
                         # (No Tables)
                           create_sequence "item_seq", increment: 1, min: 1, max: 2000000, start: 1, cache: 5, cycle: true
@@ -53,7 +53,7 @@ describe PgSequencer::SchemaDumper do
     end
 
     it "outputs false for schema output" do
-      expected_output = <<~SCHEMAEND
+      expected_output = <<-SCHEMAEND.strip_heredoc
                         # Fake Schema Header
                         # (No Tables)
                           create_sequence "item_seq", increment: 1, min: false, max: 2000000, start: 1, cache: 5, cycle: true
