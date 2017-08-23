@@ -93,7 +93,7 @@ module PgSequencer
       def sequences
         select_sequence_names.map do |sequence_name|
 
-          sequence = select_sequence
+          sequence = select_sequence(sequence_name)
           owner = select_sequence_owners(sequence_name).first
           owner_is_primary_key = owner && owner[:column] == primary_key(owner[:table])
           owned_by = owner ? "#{owner[:table]}.#{owner[:column]}" : nil
