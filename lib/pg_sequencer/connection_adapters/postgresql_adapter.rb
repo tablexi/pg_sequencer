@@ -13,7 +13,8 @@ module PgSequencer
       #     start: 1,
       #     cache: 5,
       #     cycle: true,
-      #     owned_by: ("table_name.column_name"|"NONE"|nil),
+      #     owned_by: ("table_name.column_name"|nil),
+      #
       def create_sequence(name, options = {})
         execute create_sequence_sql(name, options)
       end
@@ -27,11 +28,16 @@ module PgSequencer
       #     restart: 1,
       #     cache: 5,
       #     cycle: true,
-      #     owned_by: ("table_name.column_name"|"NONE"|nil),
+      #     owned_by: ("table_name.column_name"|nil),
+      #
       def change_sequence(name, options = {})
         execute change_sequence_sql(name, options)
       end
 
+      # Example usage:
+      #
+      #   drop_sequence "user_seq"
+      #
       def drop_sequence(name)
         execute drop_sequence_sql(name)
       end
@@ -42,6 +48,7 @@ module PgSequencer
       #     [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO MAXVALUE ]
       #     [ START [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]
       #     [ OWNED BY { table_name.column_name | NONE } ]
+      #
       def create_sequence_sql(name, options = {})
         options.delete(:restart)
         "CREATE SEQUENCE #{name}#{sequence_options_sql(options)}"
@@ -55,12 +62,17 @@ module PgSequencer
       #     [ RESTART [ [ WITH ] restart ] ]
       #     [ CACHE cache ] [ [ NO ] CYCLE ]
       #     [ OWNED BY { table_name.column_name | NONE } ]
+      #
       def change_sequence_sql(name, options = {})
         return "" if options.blank?
         options.delete(:start)
         "ALTER SEQUENCE #{name}#{sequence_options_sql(options)}"
       end
 
+      # Example SQL:
+      #
+      #   DROP SEQUENCE [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]
+      #
       def drop_sequence_sql(name)
         "DROP SEQUENCE #{name}"
       end
@@ -74,44 +86,31 @@ module PgSequencer
         sql << restart_option_sql(options) if options[:restart]  or options[:restart_with]
         sql << cache_option_sql(options) if options[:cache]
         sql << cycle_option_sql(options)
-        # sql << owned_option_sql(options) if options[:owned_by]
+        sql << owned_option_sql(options) if options[:owned_by]
         sql
       end
 
-      # Values for a selected sequence:
-      # --------------+--------------------
-      # sequence_name | temp
-      # last_value    | 7
-      # start_value   | 1
-      # increment_by  | 1
-      # max_value     | 9223372036854775807
-      # min_value     | 1
-      # cache_value   | 1
-      # log_cnt       | 26
-      # is_cycled     | f
-      # is_called     | t
       def sequences
-        all_sequences = []
+        select_sequence_names.map do |sequence_name|
 
-        select_sequence_names.each do |sequence_name|
-
-          row = select_one("SELECT * FROM #{sequence_name}")
-          # owner = select_sequence_owner(sequence_name)
+          sequence = select_sequence
+          owner = select_sequence_owners(sequence_name).first
+          owner_is_primary_key = owner && owner[:column] == primary_key(owner[:table])
+          owned_by = owner ? "#{owner[:table]}.#{owner[:column]}" : nil
 
           options = {
-            increment: row["increment_by"].to_i,
-            min: row["min_value"].to_i,
-            max: row["max_value"].to_i,
-            start: row["start_value"].to_i,
-            cache: row["cache_value"].to_i,
-            cycle: row["is_cycled"] == "t",
-            # owned_by: owner ? "#{owner["refobjid"]}.#{owner["attname"]}" : nil
+            increment: sequence["increment_by"].to_i,
+            min: sequence["min_value"].to_i,
+            max: sequence["max_value"].to_i,
+            start: sequence["start_value"].to_i,
+            cache: sequence["cache_value"].to_i,
+            cycle: sequence["is_cycled"] == "t",
+            owned_by: owned_by,
+            owner_is_primary_key: owner_is_primary_key,
           }
 
-          all_sequences << SequenceDefinition.new(sequence_name, options)
+          SequenceDefinition.new(sequence_name, options)
         end
-
-        all_sequences
       end
 
       protected
@@ -128,21 +127,48 @@ module PgSequencer
         select_all(sql).map { |row| row["relname"] }
       end
 
-      # Values for owner of a sequence:
+      # Values for a selected sequence:
       # --------------+--------------------
-      # refobjid      | some_table
-      # attname       | some_column
-      def select_sequence_owner(sequence_name)
+      # sequence_name | order_number_seq
+      # last_value    | 7
+      # start_value   | 1
+      # increment_by  | 1
+      # max_value     | 9223372036854775807
+      # min_value     | 1
+      # cache_value   | 1
+      # log_cnt       | 26
+      # is_cycled     | f
+      # is_called     | t
+      def select_sequence(sequence_name)
+        select_one("SELECT * FROM #{sequence_name}")
+      end
+
+      # Values for owners of a sequence:
+      # --------------+-------------
+      # sequence_name | order_number_seq
+      # table_name    | orders
+      # column_name   | order_number
+      # sch           | public
+      def select_sequence_owners(sequence_name)
         sql = <<-SQL.strip_heredoc
-              SELECT d.refobjid::regclass, a.attname
-              FROM pg_depend d
-              JOIN pg_attribute a ON a.attrelid = d.refobjid
-              AND a.attnum = d.refobjsubid
-              WHERE d.objid = 'public."#{sequence_name}"'::regclass
-              AND d.refobjsubid > 0
+              SELECT s.relname AS sequence_name, t.relname AS table_name, a.attname AS column_name, n.nspname AS sch
+              FROM pg_class s
+              JOIN pg_depend d ON d.objid = s.oid AND d.classid = 'pg_class'::regclass AND d.refclassid = 'pg_class'::regclass
+              JOIN pg_class t ON t.oid = d.refobjid
+              JOIN pg_namespace n ON n.oid = t.relnamespace
+              JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = d.refobjsubid
+              WHERE s.relkind = 'S' AND d.deptype = 'a'
+              AND s.relname = '#{sequence_name}'
               SQL
 
-        select_one(sql)
+        select_all(sql).map do |row|
+          {
+            sequence: row["sequence_name"],
+            table: row["table_name"],
+            column: row["column_name"],
+            sch: row["sch"],
+          }
+        end
       end
 
       def increment_option_sql(options = {})
@@ -186,7 +212,11 @@ module PgSequencer
       end
 
       def owned_option_sql(options = {})
-        " OWNED BY #{options[:owned_by]}"
+        case options[:owned_by]
+        when nil then ""
+        when false then ""
+        else " OWNED BY #{options[:owned_by]}"
+        end
       end
 
     end

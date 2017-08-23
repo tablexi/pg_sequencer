@@ -11,7 +11,13 @@ module PgSequencer
     protected
 
     def sequences(stream)
-      sequence_statements = @connection.sequences.map do |sequence|
+      # Filter out sequences that are owned by table primary keys since rails
+      # already creates those for us.
+      unmanaged_sequences = @connection.sequences.select do |sequence|
+        !sequence.options[:owner_is_primary_key]
+      end
+
+      sequence_statements = unmanaged_sequences.map do |sequence|
         statement_parts = [ ("create_sequence ") + sequence.name.inspect ]
         statement_parts << ("increment: " + sequence.options[:increment].inspect)
         statement_parts << ("min: " + sequence.options[:min].inspect)
@@ -19,7 +25,7 @@ module PgSequencer
         statement_parts << ("start: " + sequence.options[:start].inspect)
         statement_parts << ("cache: " + sequence.options[:cache].inspect)
         statement_parts << ("cycle: " + sequence.options[:cycle].inspect)
-        # statement_parts << ("owned_by: " + sequence.options[:owned_by].inspect)
+        statement_parts << ("owned_by: " + sequence.options[:owned_by].inspect)
 
         "  " + statement_parts.join(", ")
       end
