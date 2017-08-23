@@ -4,8 +4,8 @@ module PgSequencer
   module SchemaDumper
 
     def tables(stream)
-      super(stream)
       sequences(stream)
+      super(stream)
     end
 
     protected
